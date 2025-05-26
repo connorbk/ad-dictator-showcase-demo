@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Play, Mic, CheckCircle, X, Zap, Target, GraduationCap } from "lucide-react";
+import { Play, Mic, CheckCircle, X, Zap, Target, GraduationCap, ArrowRight } from "lucide-react";
 
 const Index = () => {
   const [demoState, setDemoState] = useState<'idle' | 'playing' | 'challenge' | 'success'>('idle');
@@ -45,71 +45,83 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white">
       {/* Hero Section */}
       <div className="container mx-auto px-6 py-8">
-        <nav className="flex items-center justify-between mb-16">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
+        <nav className="flex items-center justify-between mb-20">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+              <span className="text-slate-900 font-bold text-lg">AD</span>
             </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
-              Ad Dictator
-            </h1>
+            <span className="text-xl font-medium text-white">Ad Dictator</span>
           </div>
-          <div className="flex space-x-6">
-            <a href="#demo" className="hover:text-cyan-400 transition-colors">Demo</a>
-            <a href="#features" className="hover:text-cyan-400 transition-colors">Features</a>
-            <a href="#contact" className="hover:text-cyan-400 transition-colors">Contact</a>
+          <div className="flex space-x-8">
+            <a href="#demo" className="text-slate-300 hover:text-white transition-colors duration-200">Demo</a>
+            <a href="#features" className="text-slate-300 hover:text-white transition-colors duration-200">Features</a>
+            <a href="#contact" className="text-slate-300 hover:text-white transition-colors duration-200">Contact</a>
           </div>
         </nav>
 
-        <div className="text-center mb-16">
-          <Badge className="mb-4 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-cyan-300 border-cyan-500/30">
+        <div className="text-center mb-20">
+          <Badge className="mb-8 bg-white/10 text-white border-white/20 backdrop-blur-sm px-4 py-2">
             Revolutionary Ad Technology
           </Badge>
-          <h2 className="text-6xl font-bold mb-6 bg-gradient-to-r from-white via-cyan-300 to-purple-400 bg-clip-text text-transparent leading-tight">
-            Interactive Ads That
-            <br />
-            Demand Attention
+          
+          {/* Enhanced Title */}
+          <div className="mb-8">
+            <h1 className="text-8xl md:text-9xl font-black mb-4 tracking-tight">
+              <span className="block text-white">AD</span>
+              <span className="block bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                DICTATOR
+              </span>
+            </h1>
+            <div className="w-32 h-1 bg-gradient-to-r from-white to-slate-400 mx-auto mb-6"></div>
+          </div>
+          
+          <h2 className="text-3xl md:text-4xl font-light mb-8 text-slate-200 max-w-4xl mx-auto leading-relaxed">
+            Transform passive advertising into engaging experiences that demand attention
           </h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8 leading-relaxed">
-            Transform passive advertising into engaging experiences. Our AI-powered extension ensures users actively interact with your content before proceeding.
+          
+          <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed">
+            Our platform ensures users actively interact with your content before proceeding, 
+            creating unprecedented engagement rates and meaningful brand connections.
           </p>
+          
           <Button 
             onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
-            className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 transform hover:scale-105"
+            className="bg-white text-slate-900 hover:bg-slate-100 px-8 py-4 text-lg font-medium rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 group"
           >
             Experience the Demo
+            <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Button>
         </div>
 
         {/* Demo Section */}
-        <div id="demo" className="mb-16">
-          <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm p-8 rounded-2xl">
-            <div className="text-center mb-8">
-              <h3 className="text-3xl font-bold mb-4 text-white">Live Demo</h3>
-              <p className="text-gray-300 mb-6">Select a demo scenario and see Ad Dictator in action</p>
+        <div id="demo" className="mb-20">
+          <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm p-10 rounded-3xl shadow-2xl">
+            <div className="text-center mb-10">
+              <h3 className="text-4xl font-bold mb-6 text-white">Live Demo</h3>
+              <p className="text-slate-300 text-lg mb-8">Select a demo scenario and see Ad Dictator in action</p>
               
-              <div className="flex justify-center space-x-4 mb-8">
+              <div className="flex justify-center space-x-6 mb-10">
                 <Button
                   variant={currentDemo === 'mcdonalds' ? 'default' : 'outline'}
                   onClick={() => setCurrentDemo('mcdonalds')}
-                  className="bg-red-500 hover:bg-red-600 text-white border-0"
+                  className="bg-red-600 hover:bg-red-700 text-white border-0 px-6 py-3 rounded-full font-medium"
                 >
                   McDonald's
                 </Button>
                 <Button
                   variant={currentDemo === 'nike' ? 'default' : 'outline'}
                   onClick={() => setCurrentDemo('nike')}
-                  className="bg-gray-700 hover:bg-gray-800 text-white border-0"
+                  className="bg-slate-800 hover:bg-slate-700 text-white border-0 px-6 py-3 rounded-full font-medium"
                 >
                   Nike Fitness
                 </Button>
                 <Button
                   variant={currentDemo === 'education' ? 'default' : 'outline'}
                   onClick={() => setCurrentDemo('education')}
-                  className="bg-blue-500 hover:bg-blue-600 text-white border-0"
+                  className="bg-blue-600 hover:bg-blue-700 text-white border-0 px-6 py-3 rounded-full font-medium"
                 >
                   Education
                 </Button>
@@ -118,15 +130,15 @@ const Index = () => {
 
             {/* Demo Screen */}
             <div className="relative">
-              <div className="bg-black rounded-xl p-8 min-h-[400px] flex items-center justify-center border-2 border-gray-600 relative overflow-hidden">
+              <div className="bg-black/80 rounded-2xl p-12 min-h-[400px] flex items-center justify-center border border-slate-700/50 relative overflow-hidden backdrop-blur-sm">
                 {demoState === 'idle' && (
                   <div className="text-center animate-fade-in">
-                    <div className={`w-24 h-24 rounded-full bg-gradient-to-r ${demos[currentDemo].color} flex items-center justify-center mb-6 mx-auto`}>
-                      <Play className="w-12 h-12 text-white" />
+                    <div className={`w-20 h-20 rounded-full bg-gradient-to-r ${demos[currentDemo].color} flex items-center justify-center mb-8 mx-auto shadow-lg`}>
+                      <Play className="w-10 h-10 text-white" />
                     </div>
-                    <h4 className="text-2xl font-bold mb-4">{demos[currentDemo].brand} Ad Demo</h4>
-                    <p className="text-gray-400 mb-6">Click to start the interactive ad experience</p>
-                    <Button onClick={startDemo} className="bg-white text-black hover:bg-gray-200">
+                    <h4 className="text-3xl font-bold mb-6 text-white">{demos[currentDemo].brand} Ad Demo</h4>
+                    <p className="text-slate-400 text-lg mb-8">Click to start the interactive ad experience</p>
+                    <Button onClick={startDemo} className="bg-white text-black hover:bg-slate-100 px-8 py-3 rounded-full font-medium">
                       Start Demo
                     </Button>
                   </div>
@@ -134,13 +146,13 @@ const Index = () => {
 
                 {demoState === 'playing' && (
                   <div className="text-center animate-scale-in">
-                    <div className={`text-6xl font-bold bg-gradient-to-r ${demos[currentDemo].color} bg-clip-text text-transparent mb-4 animate-pulse`}>
+                    <div className={`text-7xl font-black bg-gradient-to-r ${demos[currentDemo].color} bg-clip-text text-transparent mb-6 animate-pulse`}>
                       {demos[currentDemo].adText}
                     </div>
-                    <p className="text-xl text-gray-300">Playing {demos[currentDemo].brand} Ad...</p>
+                    <p className="text-xl text-slate-300 mb-8">Playing {demos[currentDemo].brand} Ad...</p>
                     <div className="mt-8">
-                      <div className="w-full bg-gray-700 rounded-full h-2">
-                        <div className="bg-gradient-to-r from-cyan-500 to-purple-500 h-2 rounded-full animate-[width_3s_ease-in-out] w-full"></div>
+                      <div className="w-full bg-slate-700 rounded-full h-2">
+                        <div className="bg-gradient-to-r from-white to-slate-300 h-2 rounded-full animate-[width_3s_ease-in-out] w-full"></div>
                       </div>
                     </div>
                   </div>
@@ -148,16 +160,16 @@ const Index = () => {
 
                 {demoState === 'challenge' && (
                   <div className="text-center animate-fade-in">
-                    <div className="w-16 h-16 rounded-full bg-cyan-500 flex items-center justify-center mb-6 mx-auto animate-pulse">
-                      <Mic className="w-8 h-8 text-white" />
+                    <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center mb-8 mx-auto animate-pulse">
+                      <Mic className="w-8 h-8 text-slate-900" />
                     </div>
-                    <h4 className="text-2xl font-bold mb-4 text-cyan-400">Interactive Challenge</h4>
-                    <p className="text-xl mb-6">{demos[currentDemo].challenge}</p>
-                    <div className="flex justify-center space-x-4">
-                      <Button onClick={completeChallenge} className="bg-green-500 hover:bg-green-600">
+                    <h4 className="text-3xl font-bold mb-6 text-white">Interactive Challenge</h4>
+                    <p className="text-xl mb-8 text-slate-300">{demos[currentDemo].challenge}</p>
+                    <div className="flex justify-center space-x-6">
+                      <Button onClick={completeChallenge} className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-full">
                         Simulate Success
                       </Button>
-                      <Button onClick={() => setDemoState('idle')} variant="outline" className="border-gray-500 text-gray-300 hover:bg-gray-700">
+                      <Button onClick={() => setDemoState('idle')} variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-800 px-6 py-3 rounded-full">
                         <X className="w-4 h-4 mr-2" />
                         Skip
                       </Button>
@@ -167,12 +179,12 @@ const Index = () => {
 
                 {demoState === 'success' && (
                   <div className="text-center animate-scale-in">
-                    <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center mb-6 mx-auto">
+                    <div className="w-16 h-16 rounded-full bg-green-600 flex items-center justify-center mb-8 mx-auto">
                       <CheckCircle className="w-8 h-8 text-white" />
                     </div>
-                    <h4 className="text-2xl font-bold mb-4 text-green-400">Challenge Complete!</h4>
-                    <p className="text-xl mb-4">User engagement verified</p>
-                    <p className="text-gray-400">Ad can now be dismissed</p>
+                    <h4 className="text-3xl font-bold mb-6 text-green-400">Challenge Complete</h4>
+                    <p className="text-xl mb-4 text-white">User engagement verified</p>
+                    <p className="text-slate-400">Ad can now be dismissed</p>
                   </div>
                 )}
               </div>
@@ -181,85 +193,85 @@ const Index = () => {
         </div>
 
         {/* Features Tabs */}
-        <div id="features" className="mb-16">
+        <div id="features" className="mb-20">
           <Tabs defaultValue="analytics" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-gray-800 rounded-xl">
-              <TabsTrigger value="analytics" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
+            <TabsList className="grid w-full grid-cols-4 bg-slate-900/50 rounded-2xl p-2 backdrop-blur-sm">
+              <TabsTrigger value="analytics" className="data-[state=active]:bg-white data-[state=active]:text-slate-900 rounded-xl py-3">
                 Analytics
               </TabsTrigger>
-              <TabsTrigger value="campaigns" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
+              <TabsTrigger value="campaigns" className="data-[state=active]:bg-white data-[state=active]:text-slate-900 rounded-xl py-3">
                 Campaigns
               </TabsTrigger>
-              <TabsTrigger value="targeting" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
+              <TabsTrigger value="targeting" className="data-[state=active]:bg-white data-[state=active]:text-slate-900 rounded-xl py-3">
                 Targeting
               </TabsTrigger>
-              <TabsTrigger value="integration" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
+              <TabsTrigger value="integration" className="data-[state=active]:bg-white data-[state=active]:text-slate-900 rounded-xl py-3">
                 Integration
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="analytics" className="mt-8">
-              <Card className="bg-gray-800/50 border-gray-700 p-8 rounded-xl">
-                <div className="flex items-center mb-4">
-                  <Target className="w-8 h-8 text-cyan-400 mr-3" />
-                  <h3 className="text-2xl font-bold">Advanced Analytics</h3>
+            <TabsContent value="analytics" className="mt-10">
+              <Card className="bg-slate-900/50 border-slate-700/50 p-10 rounded-2xl backdrop-blur-sm">
+                <div className="flex items-center mb-6">
+                  <Target className="w-8 h-8 text-white mr-4" />
+                  <h3 className="text-3xl font-bold text-white">Advanced Analytics</h3>
                 </div>
-                <p className="text-gray-300 text-lg">
+                <p className="text-slate-300 text-lg mb-8">
                   Track engagement rates, completion times, and user behavior patterns. 
                   Get detailed insights into how users interact with your interactive ads.
                 </p>
-                <div className="mt-6 grid grid-cols-3 gap-4">
-                  <div className="bg-gray-700/50 p-4 rounded-lg text-center">
-                    <div className="text-2xl font-bold text-cyan-400">94%</div>
-                    <div className="text-sm text-gray-400">Engagement Rate</div>
+                <div className="grid grid-cols-3 gap-6">
+                  <div className="bg-slate-800/50 p-6 rounded-xl text-center backdrop-blur-sm">
+                    <div className="text-3xl font-bold text-white mb-2">94%</div>
+                    <div className="text-slate-400">Engagement Rate</div>
                   </div>
-                  <div className="bg-gray-700/50 p-4 rounded-lg text-center">
-                    <div className="text-2xl font-bold text-purple-400">2.3s</div>
-                    <div className="text-sm text-gray-400">Avg. Response Time</div>
+                  <div className="bg-slate-800/50 p-6 rounded-xl text-center backdrop-blur-sm">
+                    <div className="text-3xl font-bold text-white mb-2">2.3s</div>
+                    <div className="text-slate-400">Avg. Response Time</div>
                   </div>
-                  <div className="bg-gray-700/50 p-4 rounded-lg text-center">
-                    <div className="text-2xl font-bold text-green-400">89%</div>
-                    <div className="text-sm text-gray-400">Success Rate</div>
+                  <div className="bg-slate-800/50 p-6 rounded-xl text-center backdrop-blur-sm">
+                    <div className="text-3xl font-bold text-white mb-2">89%</div>
+                    <div className="text-slate-400">Success Rate</div>
                   </div>
                 </div>
               </Card>
             </TabsContent>
             
-            <TabsContent value="campaigns" className="mt-8">
-              <Card className="bg-gray-800/50 border-gray-700 p-8 rounded-xl">
-                <h3 className="text-2xl font-bold mb-4">Campaign Management</h3>
-                <p className="text-gray-300 text-lg mb-6">
+            <TabsContent value="campaigns" className="mt-10">
+              <Card className="bg-slate-900/50 border-slate-700/50 p-10 rounded-2xl backdrop-blur-sm">
+                <h3 className="text-3xl font-bold mb-6 text-white">Campaign Management</h3>
+                <p className="text-slate-300 text-lg mb-8">
                   Coming soon: Create, manage, and optimize your interactive ad campaigns 
                   with our intuitive dashboard.
                 </p>
-                <div className="bg-gray-700/30 p-6 rounded-lg border-2 border-dashed border-gray-600">
-                  <p className="text-center text-gray-400">Feature in development</p>
+                <div className="bg-slate-800/30 p-8 rounded-xl border border-dashed border-slate-600">
+                  <p className="text-center text-slate-400 text-lg">Feature in development</p>
                 </div>
               </Card>
             </TabsContent>
             
-            <TabsContent value="targeting" className="mt-8">
-              <Card className="bg-gray-800/50 border-gray-700 p-8 rounded-xl">
-                <h3 className="text-2xl font-bold mb-4">Smart Targeting</h3>
-                <p className="text-gray-300 text-lg mb-6">
-                  Coming soon: AI-powered targeting to deliver the right interactive 
+            <TabsContent value="targeting" className="mt-10">
+              <Card className="bg-slate-900/50 border-slate-700/50 p-10 rounded-2xl backdrop-blur-sm">
+                <h3 className="text-3xl font-bold mb-6 text-white">Smart Targeting</h3>
+                <p className="text-slate-300 text-lg mb-8">
+                  Coming soon: Advanced targeting to deliver the right interactive 
                   challenges to the right audience at the right time.
                 </p>
-                <div className="bg-gray-700/30 p-6 rounded-lg border-2 border-dashed border-gray-600">
-                  <p className="text-center text-gray-400">Feature in development</p>
+                <div className="bg-slate-800/30 p-8 rounded-xl border border-dashed border-slate-600">
+                  <p className="text-center text-slate-400 text-lg">Feature in development</p>
                 </div>
               </Card>
             </TabsContent>
             
-            <TabsContent value="integration" className="mt-8">
-              <Card className="bg-gray-800/50 border-gray-700 p-8 rounded-xl">
-                <h3 className="text-2xl font-bold mb-4">Easy Integration</h3>
-                <p className="text-gray-300 text-lg mb-6">
+            <TabsContent value="integration" className="mt-10">
+              <Card className="bg-slate-900/50 border-slate-700/50 p-10 rounded-2xl backdrop-blur-sm">
+                <h3 className="text-3xl font-bold mb-6 text-white">Easy Integration</h3>
+                <p className="text-slate-300 text-lg mb-8">
                   Coming soon: Simple SDK and API integration for mobile apps, 
                   web platforms, and advertising networks.
                 </p>
-                <div className="bg-gray-700/30 p-6 rounded-lg border-2 border-dashed border-gray-600">
-                  <p className="text-center text-gray-400">Feature in development</p>
+                <div className="bg-slate-800/30 p-8 rounded-xl border border-dashed border-slate-600">
+                  <p className="text-center text-slate-400 text-lg">Feature in development</p>
                 </div>
               </Card>
             </TabsContent>
@@ -267,33 +279,33 @@ const Index = () => {
         </div>
 
         {/* Use Cases */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          <Card className="bg-gradient-to-br from-red-500/10 to-yellow-500/10 border-red-500/20 p-6 rounded-xl">
-            <div className="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center mb-4">
-              <Target className="w-6 h-6 text-white" />
+        <div className="grid md:grid-cols-3 gap-8 mb-20">
+          <Card className="bg-slate-900/30 border-slate-700/50 p-8 rounded-2xl backdrop-blur-sm hover:bg-slate-900/50 transition-all duration-300">
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mb-6">
+              <Target className="w-6 h-6 text-slate-900" />
             </div>
-            <h3 className="text-xl font-bold mb-3">Brand Engagement</h3>
-            <p className="text-gray-300">
+            <h3 className="text-2xl font-bold mb-4 text-white">Brand Engagement</h3>
+            <p className="text-slate-300 leading-relaxed">
               Make users actively engage with your brand message through interactive challenges and voice recognition.
             </p>
           </Card>
           
-          <Card className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border-blue-500/20 p-6 rounded-xl">
-            <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mb-4">
-              <GraduationCap className="w-6 h-6 text-white" />
+          <Card className="bg-slate-900/30 border-slate-700/50 p-8 rounded-2xl backdrop-blur-sm hover:bg-slate-900/50 transition-all duration-300">
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mb-6">
+              <GraduationCap className="w-6 h-6 text-slate-900" />
             </div>
-            <h3 className="text-xl font-bold mb-3">Education</h3>
-            <p className="text-gray-300">
+            <h3 className="text-2xl font-bold mb-4 text-white">Education</h3>
+            <p className="text-slate-300 leading-relaxed">
               Ensure students are paying attention during online lessons with interactive comprehension checks.
             </p>
           </Card>
           
-          <Card className="bg-gradient-to-br from-cyan-500/10 to-purple-500/10 border-cyan-500/20 p-6 rounded-xl">
-            <div className="w-12 h-12 bg-cyan-500 rounded-lg flex items-center justify-center mb-4">
-              <Zap className="w-6 h-6 text-white" />
+          <Card className="bg-slate-900/30 border-slate-700/50 p-8 rounded-2xl backdrop-blur-sm hover:bg-slate-900/50 transition-all duration-300">
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mb-6">
+              <Zap className="w-6 h-6 text-slate-900" />
             </div>
-            <h3 className="text-xl font-bold mb-3">Compliance</h3>
-            <p className="text-gray-300">
+            <h3 className="text-2xl font-bold mb-4 text-white">Compliance</h3>
+            <p className="text-slate-300 leading-relaxed">
               Verify users have read and understood important agreements through targeted questions.
             </p>
           </Card>
@@ -301,12 +313,12 @@ const Index = () => {
 
         {/* Contact Section */}
         <div id="contact" className="text-center">
-          <Card className="bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border-cyan-500/20 p-8 rounded-2xl">
-            <h3 className="text-3xl font-bold mb-4">Ready to Transform Your Ads?</h3>
-            <p className="text-xl text-gray-300 mb-6">
+          <Card className="bg-slate-900/30 border-slate-700/50 p-12 rounded-3xl backdrop-blur-sm">
+            <h3 className="text-4xl font-bold mb-6 text-white">Ready to Transform Your Ads?</h3>
+            <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
               Join the future of interactive advertising with Ad Dictator
             </p>
-            <Button className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white px-8 py-3 text-lg font-semibold rounded-xl">
+            <Button className="bg-white text-slate-900 hover:bg-slate-100 px-8 py-4 text-lg font-medium rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
               Get Early Access
             </Button>
           </Card>
