@@ -170,9 +170,9 @@ export class EmotionAnalyzer {
   private modelsLoaded = false;
   private stableEmotions = new Map<string, Record<string, number>>();
   private emotionCounters = new Map<string, Record<string, number>>();
-  private minFramesForChange = 5; // Reduced for better responsiveness
-  private minConfidenceThreshold = 0.3; // Lowered threshold
-  private minConfidenceGap = 0.15; // Reduced gap requirement
+  private minFramesForChange = 18; // Increased for much better stability
+  private minConfidenceThreshold = 0.7; // Higher threshold for more confident detection
+  private minConfidenceGap = 0.35; // Larger gap requirement to prevent rapid switching
   private positionTolerance = 50;
 
   async initialize(onProgress?: (progress: number) => void): Promise<boolean> {
@@ -321,8 +321,8 @@ export class EmotionAnalyzer {
     // Find the dominant emotion
     const dominant = this.getDominantEmotion(boostedEmotions);
 
-    // Special handling for happiness - lower threshold
-    const effectiveThreshold = dominant?.emotion === 'happy' ? 0.15 : this.minConfidenceThreshold;
+    // Special handling for happiness - higher threshold for more robust detection
+    const effectiveThreshold = dominant?.emotion === 'happy' ? 0.55 : this.minConfidenceThreshold;
 
     if (!dominant || dominant.confidence < effectiveThreshold) {
       // Return existing stable emotion if new one is too weak
@@ -354,8 +354,8 @@ export class EmotionAnalyzer {
     const counters = this.emotionCounters.get(positionId) || {};
     counters[dominant.emotion] = (counters[dominant.emotion] || 0) + 1;
 
-    // Special handling for happiness - require fewer frames
-    const requiredFrames = dominant.emotion === 'happy' ? 2 : this.minFramesForChange;
+    // Special handling for happiness - require more frames for stability
+    const requiredFrames = dominant.emotion === 'happy' ? 4 : this.minFramesForChange;
 
     // Check if new emotion has enough consecutive frames
     if (counters[dominant.emotion] >= requiredFrames) {
@@ -376,13 +376,13 @@ export class EmotionAnalyzer {
 
     const boosted = { ...emotions };
 
-    // Boost happiness by 40% to make it more detectable
-    boosted.happy = Math.min(1.0, emotions.happy * 1.4);
+    // Boost happiness by 20% to make it more detectable but less sensitive
+    boosted.happy = Math.min(1.0, emotions.happy * 1.2);
 
-    // Also check if there's any smile-related confidence and boost it
-    if (emotions.happy > 0.1) {
-      // If there's even a small amount of happiness, give it a significant boost
-      boosted.happy = Math.max(boosted.happy, 0.3);
+    // More conservative boost for small amounts of happiness
+    if (emotions.happy > 0.15) {
+      // Only boost if there's a reasonable amount of happiness detected
+      boosted.happy = Math.max(boosted.happy, 0.25);
     }
 
     return boosted;

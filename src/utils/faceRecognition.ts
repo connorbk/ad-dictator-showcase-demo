@@ -39,17 +39,19 @@ export class FaceRecognitionService {
   // Emotion stabilization properties
   private stableEmotions = new Map<string, EmotionScores>();
   private emotionCounters = new Map<string, Record<string, number>>();
-  private minFramesForChange = 8;
-  private minConfidenceThreshold = 0.5;
+  private emotionHistory = new Map<string, EmotionScores[]>(); // Store emotion history for smoothing
+  private minFramesForChange = 15; // Increased for better stability
+  private minConfidenceThreshold = 0.65; // Higher threshold for more confident detection
   private positionTolerance = 50;
+  private historyLength = 8; // Number of frames to keep in history for smoothing
   private emotionThresholds = {
-    sad: 0.7,      // Require higher confidence for sad (reduced from default)
-    happy: 0.4,    // Lower threshold for positive emotions
-    neutral: 0.4,
-    angry: 0.5,
-    surprised: 0.5,
-    disgusted: 0.5,
-    fearful: 0.5
+    sad: 0.75,     // Require higher confidence for sad
+    happy: 0.55,   // Increased threshold for happiness for more stability
+    neutral: 0.5,  // Increased neutral threshold
+    angry: 0.7,    // Higher threshold for negative emotions
+    surprised: 0.65,
+    disgusted: 0.7,
+    fearful: 0.7
   };
 
   constructor() {
@@ -188,8 +190,11 @@ export class FaceRecognitionService {
         };
         const positionId = `face_${Math.round(faceCenter.x / this.positionTolerance)}_${Math.round(faceCenter.y / this.positionTolerance)}`;
 
+        // Apply temporal smoothing first
+        const smoothedEmotions = this.smoothEmotions(positionId, expressions);
+
         // Get stable emotion using the stabilization logic
-        const stableEmotions = this.updateStableEmotion(positionId, expressions);
+        const stableEmotions = this.updateStableEmotion(positionId, smoothedEmotions);
         const dominantResult = this.getDominantEmotion(stableEmotions);
 
         if (dominantResult) {
@@ -281,6 +286,62 @@ export class FaceRecognitionService {
     return this.stableEmotions.get(positionId) || null;
   }
 
+  /**
+   * Apply temporal smoothing to emotions to reduce jitter
+   */
+  private smoothEmotions(positionId: string, newEmotions: EmotionScores): EmotionScores {
+    // Get or create emotion history for this position
+    if (!this.emotionHistory.has(positionId)) {
+      this.emotionHistory.set(positionId, []);
+    }
+
+    const history = this.emotionHistory.get(positionId)!;
+
+    // Add new emotions to history
+    history.push(newEmotions);
+
+    // Keep only recent history
+    if (history.length > this.historyLength) {
+      history.shift();
+    }
+
+    // If we don't have enough history, return the new emotions
+    if (history.length < 3) {
+      return newEmotions;
+    }
+
+    // Calculate weighted average with more weight on recent frames
+    const smoothedEmotions: EmotionScores = {
+      happy: 0,
+      sad: 0,
+      angry: 0,
+      fearful: 0,
+      disgusted: 0,
+      surprised: 0,
+      neutral: 0
+    };
+
+    let totalWeight = 0;
+
+    // Apply exponential weighting (more recent frames have higher weight)
+    history.forEach((emotions, index) => {
+      const weight = Math.pow(1.5, index); // Exponential weighting
+      totalWeight += weight;
+
+      Object.keys(smoothedEmotions).forEach(emotion => {
+        smoothedEmotions[emotion as keyof EmotionScores] +=
+          (emotions[emotion as keyof EmotionScores] || 0) * weight;
+      });
+    });
+
+    // Normalize by total weight
+    Object.keys(smoothedEmotions).forEach(emotion => {
+      smoothedEmotions[emotion as keyof EmotionScores] /= totalWeight;
+    });
+
+    return smoothedEmotions;
+  }
+
   private createEmotionScores(dominantEmotion: string, confidence: number): EmotionScores {
     return {
       neutral: dominantEmotion === 'neutral' ? confidence : 0,
@@ -309,8 +370,20 @@ export class FaceRecognitionService {
       return this.getStableEmotion(positionId) || newEmotions;
     }
 
-    // Get current stable emotion
+    // Get current stable emotion to compare
     const currentStable = this.getStableEmotion(positionId);
+    if (currentStable) {
+      const currentDominant = this.getDominantEmotion(currentStable);
+
+      // If we have a current emotion, require the new emotion to be significantly stronger
+      if (currentDominant && currentDominant.emotion !== dominant.emotion) {
+        const confidenceGap = 0.2; // Require 20% higher confidence to change emotion
+        if (dominant.confidence < currentDominant.confidence + confidenceGap) {
+          // New emotion isn't strong enough to override current one
+          return currentStable;
+        }
+      }
+    }
 
     if (!currentStable) {
       // No previous emotion, set this as stable
@@ -419,6 +492,7 @@ export class FaceRecognitionService {
   clearCache(): void {
     this.stableEmotions.clear();
     this.emotionCounters.clear();
+    this.emotionHistory.clear();
   }
 
   cleanup(): void {

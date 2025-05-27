@@ -64,8 +64,8 @@ export class DrawingUtils {
 
     const { emotion, confidence } = dominant;
 
-    // Special handling for happiness - lower threshold
-    const effectiveThreshold = emotion === 'happy' ? 0.15 : 0.3;
+    // More conservative thresholds for stable display
+    const effectiveThreshold = emotion === 'happy' ? 0.5 : 0.6;
 
     // Only show if confidence is above threshold, otherwise show neutral
     if (confidence < effectiveThreshold) {
@@ -148,8 +148,8 @@ export class DrawingUtils {
 
     const dominant = emotionEntries.reduce((a, b) => a[1] > b[1] ? a : b);
 
-    // Lower threshold for better detection
-    return dominant[1] > 0.05 ? { emotion: dominant[0], confidence: dominant[1] } : null;
+    // Higher threshold for more stable detection
+    return dominant[1] > 0.4 ? { emotion: dominant[0], confidence: dominant[1] } : null;
   }
 
   /**

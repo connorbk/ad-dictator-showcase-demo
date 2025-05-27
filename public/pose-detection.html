@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pose Detection Demo</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .video-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .video-section {
+            flex: 1;
+        }
+        video {
+            width: 100%;
+            max-width: 400px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.detecting {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .detection-result {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .pose-detected {
+            border-left-color: #28a745;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤸‍♂️ Real-time Pose Detection Demo</h1>
+        <p>This demo captures frames every <strong>1.1 seconds</strong> and sends them to the Python pose detection API.</p>
+        
+        <div id="status" class="status disconnected">
+            Disconnected from server
+        </div>
+
+        <div class="video-container">
+            <div class="video-section">
+                <h3>📹 Live Camera Feed</h3>
+                <video id="videoElement" autoplay muted playsinline></video>
+                <canvas id="captureCanvas" style="display: none;"></canvas>
+            </div>
+            <div class="video-section">
+                <h3>🎯 Pose Detection Results</h3>
+                <div id="poseVisualization" style="min-height: 300px; background: #f8f9fa; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #666;">
+                    Start detection to see pose analysis
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="startCamera">📷 Start Camera</button>
+            <button id="startDetection" disabled>🚀 Start Pose Detection</button>
+            <button id="stopDetection" disabled>⏹️ Stop Detection</button>
+            <button id="checkHealth">🏥 Check API Health</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="frameCount">0</div>
+                <div class="stat-label">Frames Processed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="poseCount">0</div>
+                <div class="stat-label">Poses Detected</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgProcessingTime">0ms</div>
+                <div class="stat-label">Avg Processing Time</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="apiStatus">Unknown</div>
+                <div class="stat-label">API Status</div>
+            </div>
+        </div>
+
+        <div class="results">
+            <h3>📊 Detection Results</h3>
+            <div id="resultsContainer">
+                <p>No results yet. Start pose detection to see real-time analysis.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Socket.IO connection
+        const socket = io();
+        
+        // DOM elements
+        const videoElement = document.getElementById('videoElement');
+        const captureCanvas = document.getElementById('captureCanvas');
+        const statusElement = document.getElementById('status');
+        const startCameraBtn = document.getElementById('startCamera');
+        const startDetectionBtn = document.getElementById('startDetection');
+        const stopDetectionBtn = document.getElementById('stopDetection');
+        const checkHealthBtn = document.getElementById('checkHealth');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const poseVisualization = document.getElementById('poseVisualization');
+        
+        // Stats elements
+        const frameCountEl = document.getElementById('frameCount');
+        const poseCountEl = document.getElementById('poseCount');
+        const avgProcessingTimeEl = document.getElementById('avgProcessingTime');
+        const apiStatusEl = document.getElementById('apiStatus');
+
+        // State variables
+        let isDetecting = false;
+        let cameraStream = null;
+        let frameCount = 0;
+        let poseCount = 0;
+        let totalProcessingTime = 0;
+        let processingTimes = [];
+
+        // Socket event handlers
+        socket.on('connected', (data) => {
+            console.log('Connected to server:', data);
+            updateStatus('connected', `Connected to server (Session: ${data.session_id})`);
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+            updateStatus('disconnected', 'Disconnected from server');
+            isDetecting = false;
+            updateButtons();
+        });
+
+        socket.on('pose_detection_started', (data) => {
+            console.log('Pose detection started:', data);
+            updateStatus('detecting', `Pose detection active (${data.frame_interval_ms}ms intervals)`);
+            isDetecting = true;
+            updateButtons();
+        });
+
+        socket.on('pose_detection_stopped', (data) => {
+            console.log('Pose detection stopped:', data);
+            updateStatus('connected', 'Connected - Detection stopped');
+            isDetecting = false;
+            updateButtons();
+        });
+
+        socket.on('request_frame', (data) => {
+            console.log('Frame requested:', data.frame_number);
+            captureAndSendFrame(data.frame_number, data.timestamp);
+        });
+
+        socket.on('pose_result', (result) => {
+            console.log('Pose detection result:', result);
+            handlePoseResult(result);
+        });
+
+        socket.on('pose_error', (error) => {
+            console.error('Pose detection error:', error);
+            addResult(`Error in frame ${error.frame_number}: ${error.error}`, 'error');
+        });
+
+        socket.on('api_health', (health) => {
+            console.log('API health:', health);
+            apiStatusEl.textContent = health.status;
+            apiStatusEl.style.color = health.status === 'online' ? '#28a745' : '#dc3545';
+        });
+
+        // Camera functions
+        async function startCamera() {
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    }
+                });
+                videoElement.srcObject = cameraStream;
+                startCameraBtn.textContent = '📷 Camera Active';
+                startCameraBtn.disabled = true;
+                startDetectionBtn.disabled = false;
+                
+                // Setup canvas for frame capture
+                captureCanvas.width = 640;
+                captureCanvas.height = 480;
+                
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                alert('Error accessing camera: ' + error.message);
+            }
+        }
+
+        function captureAndSendFrame(frameNumber, timestamp) {
+            if (!cameraStream || !videoElement.videoWidth) {
+                console.warn('Camera not ready for frame capture');
+                return;
+            }
+
+            const ctx = captureCanvas.getContext('2d');
+            ctx.drawImage(videoElement, 0, 0, captureCanvas.width, captureCanvas.height);
+            
+            // Convert to base64
+            const imageData = captureCanvas.toDataURL('image/jpeg', 0.8);
+            
+            // Send to server for pose detection
+            socket.emit('detect_pose', {
+                image: imageData,
+                frame_number: frameNumber,
+                timestamp: timestamp,
+                return_image: false,
+                draw_keypoints: true
+            });
+        }
+
+        function handlePoseResult(result) {
+            frameCount++;
+            frameCountEl.textContent = frameCount;
+            
+            if (result.people_detected > 0) {
+                poseCount++;
+                poseCountEl.textContent = poseCount;
+            }
+            
+            // Update processing time stats
+            if (result.total_processing_time_ms) {
+                processingTimes.push(result.total_processing_time_ms);
+                if (processingTimes.length > 10) {
+                    processingTimes.shift(); // Keep only last 10 measurements
+                }
+                const avgTime = processingTimes.reduce((a, b) => a + b, 0) / processingTimes.length;
+                avgProcessingTimeEl.textContent = Math.round(avgTime) + 'ms';
+            }
+            
+            // Display result
+            const resultText = `Frame ${result.frame_number}: ${result.people_detected} people detected`;
+            const hasTargetPose = result.detections.some(d => d.target_pose_detected);
+            addResult(resultText, hasTargetPose ? 'pose-detected' : 'normal');
+            
+            // Update pose visualization
+            updatePoseVisualization(result);
+        }
+
+        function updatePoseVisualization(result) {
+            let html = `<div style="padding: 20px;">`;
+            html += `<h4>Frame ${result.frame_number} Analysis</h4>`;
+            html += `<p><strong>People Detected:</strong> ${result.people_detected}</p>`;
+            html += `<p><strong>Processing Time:</strong> ${Math.round(result.processing_time_ms)}ms</p>`;
+            
+            if (result.detections.length > 0) {
+                result.detections.forEach((detection, index) => {
+                    html += `<div style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">`;
+                    html += `<strong>Person ${detection.person_id}</strong><br>`;
+                    html += `Confidence: ${(detection.confidence * 100).toFixed(1)}%<br>`;
+                    html += `Target Pose: ${detection.target_pose_detected ? '✅ Detected' : '❌ Not detected'}<br>`;
+                    html += `Elbows above shoulders: ${detection.pose_analysis.elbows_above_shoulders ? '✅' : '❌'}<br>`;
+                    html += `Hands above elbows: ${detection.pose_analysis.hands_above_elbows ? '✅' : '❌'}`;
+                    html += `</div>`;
+                });
+            }
+            
+            html += `</div>`;
+            poseVisualization.innerHTML = html;
+        }
+
+        function addResult(text, type = 'normal') {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `detection-result ${type}`;
+            resultDiv.innerHTML = `<small>${new Date().toLocaleTimeString()}</small><br>${text}`;
+            
+            resultsContainer.insertBefore(resultDiv, resultsContainer.firstChild);
+            
+            // Keep only last 20 results
+            while (resultsContainer.children.length > 20) {
+                resultsContainer.removeChild(resultsContainer.lastChild);
+            }
+        }
+
+        function updateStatus(type, message) {
+            statusElement.className = `status ${type}`;
+            statusElement.textContent = message;
+        }
+
+        function updateButtons() {
+            startDetectionBtn.disabled = !cameraStream || isDetecting;
+            stopDetectionBtn.disabled = !isDetecting;
+        }
+
+        // Event listeners
+        startCameraBtn.addEventListener('click', startCamera);
+        
+        startDetectionBtn.addEventListener('click', () => {
+            socket.emit('start_pose_detection');
+        });
+        
+        stopDetectionBtn.addEventListener('click', () => {
+            socket.emit('stop_pose_detection');
+        });
+        
+        checkHealthBtn.addEventListener('click', () => {
+            socket.emit('check_api_health');
+        });
+
+        // Initialize
+        updateButtons();
+        
+        // Check API health on load
+        setTimeout(() => {
+            socket.emit('check_api_health');
+        }, 1000);
+    </script>
+</body>
+</html>

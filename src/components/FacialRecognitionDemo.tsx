@@ -43,13 +43,12 @@ const FacialRecognitionDemo: React.FC<FacialRecognitionDemoProps> = ({ onClose, 
   const [smileCompleted, setSmileCompleted] = useState(false);
   const smileRequiredDuration = 3000; // 3 seconds in milliseconds
   const lastUpdateTimeRef = useRef<number>(Date.now());
-  const successCallbackCalledRef = useRef<boolean>(false); // Track if success callback was already called
 
   // Timer state for timeout handling
   const [demoStartTime, setDemoStartTime] = useState<number | null>(null);
   const [timeoutTriggered, setTimeoutTriggered] = useState(false);
-  const [remainingTime, setRemainingTime] = useState(10); // Remaining time in seconds
-  const demoTimeoutDuration = 10000; // 10 seconds timeout
+  const [remainingTime, setRemainingTime] = useState(15); // Remaining time in seconds
+  const demoTimeoutDuration = 15000; // 15 seconds timeout
   const timeoutTimerRef = useRef<NodeJS.Timeout | null>(null);
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -176,11 +175,6 @@ const FacialRecognitionDemo: React.FC<FacialRecognitionDemoProps> = ({ onClose, 
   }, []); // Removed settings.showEmotions dependency since we always run emotion analysis now
 
   const checkSmileDetection = (emotions: EmotionResult[]) => {
-    // Don't process if smile is already completed
-    if (smileCompleted || successCallbackCalledRef.current) {
-      return;
-    }
-
     const currentTime = Date.now();
     const timeSinceLastUpdate = currentTime - lastUpdateTimeRef.current;
 
@@ -217,31 +211,12 @@ const FacialRecognitionDemo: React.FC<FacialRecognitionDemoProps> = ({ onClose, 
           const newTotal = prev + timeSinceLastUpdate;
 
           // Check if we've reached the required total duration
-          if (newTotal >= smileRequiredDuration && !smileCompleted && !successCallbackCalledRef.current) {
+          if (newTotal >= smileRequiredDuration && !smileCompleted) {
             setSmileCompleted(true);
-            successCallbackCalledRef.current = true; // Mark that we've called the success callback
-
-            // Clear timeout timers when smile is completed
-            if (timeoutTimerRef.current) {
-              clearTimeout(timeoutTimerRef.current);
-              timeoutTimerRef.current = null;
-            }
-            if (countdownTimerRef.current) {
-              clearInterval(countdownTimerRef.current);
-              countdownTimerRef.current = null;
-            }
-
             // Call success callback after a short delay to show the success message
-            // Wrap in try-catch to prevent crashes
             setTimeout(() => {
-              try {
-                if (onSuccess && typeof onSuccess === 'function') {
-                  console.log('Calling onSuccess callback...');
-                  onSuccess();
-                }
-              } catch (error) {
-                console.error('Error in onSuccess callback:', error);
-                // Don't let callback errors crash the app
+              if (onSuccess) {
+                onSuccess();
               }
             }, 2000);
           }
@@ -412,14 +387,11 @@ const FacialRecognitionDemo: React.FC<FacialRecognitionDemoProps> = ({ onClose, 
         isRunningRef.current = true;
         setIsRunning(true);
 
-        // Reset success callback flag when starting
-        successCallbackCalledRef.current = false;
-
         // Set demo start time and setup timeout timer
         const startTime = Date.now();
         setDemoStartTime(startTime);
         setTimeoutTriggered(false);
-        setRemainingTime(10); // Reset to 10 seconds
+        setRemainingTime(15); // Reset to 15 seconds
 
         // Clear any existing timers
         if (timeoutTimerRef.current) {
@@ -447,21 +419,11 @@ const FacialRecognitionDemo: React.FC<FacialRecognitionDemoProps> = ({ onClose, 
 
         // Set up timeout timer
         timeoutTimerRef.current = setTimeout(() => {
-          if (!smileCompleted && isRunningRef.current && !successCallbackCalledRef.current) {
+          if (!smileCompleted && isRunningRef.current) {
             console.log('Demo timeout reached, triggering restart');
             setTimeoutTriggered(true);
-
-            // Stop the camera first
-            stopCamera();
-
-            // Call timeout callback with error handling
-            try {
-              if (onTimeout && typeof onTimeout === 'function') {
-                console.log('Calling onTimeout callback...');
-                onTimeout();
-              }
-            } catch (error) {
-              console.error('Error in onTimeout callback:', error);
+            if (onTimeout) {
+              onTimeout();
             }
           }
         }, demoTimeoutDuration);
@@ -527,12 +489,11 @@ const FacialRecognitionDemo: React.FC<FacialRecognitionDemoProps> = ({ onClose, 
     setTotalSmileTime(0);
     setSmileCompleted(false);
     lastUpdateTimeRef.current = Date.now();
-    successCallbackCalledRef.current = false; // Reset success callback flag
 
     // Reset timer state
     setDemoStartTime(null);
     setTimeoutTriggered(false);
-    setRemainingTime(10);
+    setRemainingTime(15);
   };
 
   const processFrame = async () => {
@@ -679,7 +640,7 @@ const FacialRecognitionDemo: React.FC<FacialRecognitionDemoProps> = ({ onClose, 
                 <div className="w-full bg-gray-700 rounded-full h-2">
                   <div
                     className="bg-gradient-to-r from-red-500 to-orange-400 h-2 rounded-full transition-all duration-1000"
-                    style={{ width: `${(remainingTime / 10) * 100}%` }}
+                    style={{ width: `${(remainingTime / 15) * 100}%` }}
                   ></div>
                 </div>
               </div>

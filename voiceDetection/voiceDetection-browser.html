@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Detection - Browser Version</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.info { background-color: #e3f2fd; color: #1976d2; }
+        .status.success { background-color: #e8f5e8; color: #2e7d32; }
+        .status.error { background-color: #ffebee; color: #c62828; }
+        .status.warning { background-color: #fff3e0; color: #f57c00; }
+        .controls {
+            margin: 20px 0;
+            text-align: center;
+        }
+        button {
+            padding: 12px 24px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .start-btn {
+            background-color: #4caf50;
+            color: white;
+        }
+        .start-btn:hover {
+            background-color: #45a049;
+        }
+        .stop-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        .stop-btn:hover {
+            background-color: #da190b;
+        }
+        .transcript-area {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .detection {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        .api-key-input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Voice Detection - Browser Version</h1>
+        <p>This version uses browser Web Audio API instead of requiring Sox installation.</p>
+
+        <div>
+            <label for="apiKey">Deepgram API Key:</label>
+            <input type="password" id="apiKey" class="api-key-input" placeholder="Enter your Deepgram API key here">
+            <small>Get your API key from: <a href="https://console.deepgram.com/" target="_blank">https://console.deepgram.com/</a></small>
+        </div>
+
+        <div class="controls">
+            <button id="startBtn" class="start-btn">🎤 Start Voice Detection</button>
+            <button id="stopBtn" class="stop-btn" disabled>⏹️ Stop Detection</button>
+        </div>
+
+        <div id="status" class="status info">Ready to start voice detection</div>
+
+        <h3>Transcript & Detections:</h3>
+        <div id="transcript" class="transcript-area">Transcripts will appear here...</div>
+    </div>
+
+    <script type="module">
+        // Import the phrase detection logic
+        const CONFIDENCE_THRESHOLD = 0.45;
+
+        const PHRASE_CONFIGS = {
+            "temu": {
+                explicitMatches: [
+                    "t moon", "timu", "tee moo", "tea moo", "timo", "teamu", "tamo", "temoo", "tamoo",
+                    "te moo", "tay moo", "taymu", "taymou", "temew", "temeww", "teme", "temi", "temue",
+                    "temuh", "temewh", "tempoo", "temewoo", "timew", "chemu", "demo", "tma", "tenu",
+                    "tinu", "teemu", "tehmoo", "tumoo", "timoo", "tehmu", "tumew", "tamuh", "temooe"
+                ]
+            },
+            "mcdonalds": {
+                explicitMatches: [
+                    "mcdonald's", "mc donalds", "macdonalds", "mac donalds", "mickey d's", "mickey ds",
+                    "micky d's", "micky ds", "mcdonald", "mc donald", "macdonald", "mac donald",
+                    "mcdonals", "mc donals", "macdonals", "mac donals", "mac", "donald", "macs", "donalds"
+                ]
+            }
+        };
+
+        // Phrase detection functions (simplified for browser)
+        function detectSimilarPhrases(transcript, targetPhrase) {
+            if (!PHRASE_CONFIGS[targetPhrase]) {
+                throw new Error(`Target phrase "${targetPhrase}" not configured`);
+            }
+
+            const config = PHRASE_CONFIGS[targetPhrase];
+            const transcriptLower = transcript.toLowerCase();
+            let processedTranscript = transcript;
+            let detections = [];
+
+            // Check for explicit matches
+            for (const explicitMatch of config.explicitMatches) {
+                if (transcriptLower.includes(explicitMatch)) {
+                    detections.push({
+                        original: explicitMatch,
+                        target: targetPhrase,
+                        confidence: 1.0,
+                        type: 'explicit_match'
+                    });
+                    const regex = new RegExp(explicitMatch.replace(/\s+/g, '\\s+'), 'gi');
+                    processedTranscript = processedTranscript.replace(regex, targetPhrase.toUpperCase());
+                }
+            }
+
+            return {
+                original: transcript,
+                processed: processedTranscript,
+                detections: detections,
+                hasDetections: detections.length > 0
+            };
+        }
+
+        function detectMultiplePhrases(transcript, targetPhrases = ["temu"]) {
+            let allDetections = [];
+            let processedTranscript = transcript;
+
+            for (const targetPhrase of targetPhrases) {
+                const result = detectSimilarPhrases(transcript, targetPhrase);
+                if (result.hasDetections) {
+                    allDetections.push(...result.detections);
+                    processedTranscript = result.processed;
+                    transcript = result.processed;
+                }
+            }
+
+            return {
+                original: transcript,
+                processed: processedTranscript,
+                detections: allDetections,
+                hasDetections: allDetections.length > 0
+            };
+        }
+
+        // Browser-based voice detection
+        class BrowserVoiceDetection {
+            constructor() {
+                this.isRecording = false;
+                this.mediaRecorder = null;
+                this.websocket = null;
+                this.audioContext = null;
+                this.processor = null;
+                this.stream = null;
+            }
+
+            updateStatus(message, type = 'info') {
+                const statusEl = document.getElementById('status');
+                statusEl.textContent = message;
+                statusEl.className = `status ${type}`;
+            }
+
+            addToTranscript(text, isDetection = false) {
+                const transcriptEl = document.getElementById('transcript');
+                const timestamp = new Date().toLocaleTimeString();
+
+                if (isDetection) {
+                    transcriptEl.innerHTML += `<div class="detection">[${timestamp}] 🎯 ${text}</div>`;
+                } else {
+                    transcriptEl.innerHTML += `[${timestamp}] ${text}\n`;
+                }
+
+                transcriptEl.scrollTop = transcriptEl.scrollHeight;
+            }
+
+            async start() {
+                const apiKey = document.getElementById('apiKey').value.trim();
+                if (!apiKey) {
+                    this.updateStatus('Please enter your Deepgram API key', 'error');
+                    return;
+                }
+
+                try {
+                    this.updateStatus('Starting voice detection...', 'info');
+
+                    // Check if getUserMedia is supported
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        throw new Error('getUserMedia is not supported in this browser');
+                    }
+
+                    // Get microphone access
+                    this.stream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            channelCount: 1,
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true
+                        }
+                    });
+
+                    // Get audio track settings and use actual sample rate
+                    if (this.stream.getAudioTracks().length > 0) {
+                        const track = this.stream.getAudioTracks()[0];
+                        const settings = track.getSettings();
+
+                        // Use the actual sample rate from the microphone
+                        const actualSampleRate = settings.sampleRate || 48000;
+
+                        // Create WebSocket connection to Deepgram with correct sample rate
+                        const wsUrl = `wss://api.deepgram.com/v1/listen?smart_format=true&model=nova-2&language=en-US&encoding=linear16&sample_rate=${actualSampleRate}&channels=1`;
+                        this.websocket = new WebSocket(wsUrl, ['token', apiKey]);
+                    } else {
+                        throw new Error('No audio tracks available');
+                    }
+
+                    this.websocket.onopen = () => {
+                        this.updateStatus('🎤 Voice detection active - speak now!', 'success');
+                        this.isRecording = true;
+                        document.getElementById('startBtn').disabled = true;
+                        document.getElementById('stopBtn').disabled = false;
+                    };
+
+                    this.websocket.onmessage = (event) => {
+                        try {
+                            const data = JSON.parse(event.data);
+
+                            if (data.channel && data.channel.alternatives && data.channel.alternatives.length > 0) {
+                                const transcript = data.channel.alternatives[0].transcript;
+
+                                if (transcript && transcript.trim()) {
+                                    // Process transcript for phrase detection
+                                    const result = detectMultiplePhrases(transcript, ["temu", "mcdonalds"]);
+
+                                    if (result.hasDetections) {
+                                        this.addToTranscript(`DETECTED: ${result.processed}`, true);
+                                        result.detections.forEach(detection => {
+                                            this.addToTranscript(`   "${detection.original}" → "${detection.target}" (${(detection.confidence * 100).toFixed(1)}% confidence, ${detection.type})`, true);
+                                        });
+                                    } else {
+                                        this.addToTranscript(transcript);
+                                    }
+                                }
+                            }
+                        } catch (error) {
+                            console.error('WebSocket message parsing error:', error);
+                        }
+                    };
+
+                    this.websocket.onerror = (error) => {
+                        console.error('WebSocket error:', error);
+                        this.updateStatus('Connection error - check your API key and internet connection', 'error');
+                    };
+
+                    this.websocket.onclose = (event) => {
+                        this.updateStatus('Connection closed', 'warning');
+                        this.stop();
+                    };
+
+                    // Set up audio processing with correct sample rate
+                    const actualSampleRate = this.stream.getAudioTracks()[0].getSettings().sampleRate || 48000;
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: actualSampleRate });
+
+                    const source = this.audioContext.createMediaStreamSource(this.stream);
+
+                    // Create a script processor to capture audio data
+                    this.processor = this.audioContext.createScriptProcessor(4096, 1, 1);
+
+                    this.processor.onaudioprocess = (event) => {
+                        if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
+                            const inputData = event.inputBuffer.getChannelData(0);
+
+                            // Convert float32 to int16
+                            const int16Data = new Int16Array(inputData.length);
+                            for (let i = 0; i < inputData.length; i++) {
+                                int16Data[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
+                            }
+
+                            // Send audio data
+                            this.websocket.send(int16Data.buffer);
+                        }
+                    };
+
+                    source.connect(this.processor);
+                    this.processor.connect(this.audioContext.destination);
+
+                } catch (error) {
+                    console.error('Error starting voice detection:', error);
+                    this.updateStatus(`Error: ${error.message}`, 'error');
+
+                    // Clean up on error
+                    if (this.stream) {
+                        this.stream.getTracks().forEach(track => track.stop());
+                    }
+                }
+            }
+
+            stop() {
+                this.isRecording = false;
+
+                if (this.websocket) {
+                    this.websocket.close();
+                    this.websocket = null;
+                }
+
+                if (this.processor) {
+                    this.processor.disconnect();
+                    this.processor = null;
+                }
+
+                if (this.audioContext) {
+                    this.audioContext.close();
+                    this.audioContext = null;
+                }
+
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                    this.stream = null;
+                }
+
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                this.updateStatus('Voice detection stopped', 'info');
+            }
+
+
+        }
+
+        // Initialize the application
+        const voiceDetection = new BrowserVoiceDetection();
+
+        document.getElementById('startBtn').addEventListener('click', () => {
+            voiceDetection.start();
+        });
+
+        document.getElementById('stopBtn').addEventListener('click', () => {
+            voiceDetection.stop();
+        });
+
+        // Clear transcript on page load
+        document.getElementById('transcript').textContent = 'Transcripts will appear here...';
+    </script>
+</body>
+</html>
