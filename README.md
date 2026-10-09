@@ -1,73 +1,68 @@
-# Welcome to your Lovable project
+# Ad Dictator
 
-## Project info
+**Ads you can't skip until you prove you were paying attention.** A hackathon project built at the Mashup hackathon (May 2025).
 
-**URL**: https://lovable.dev/projects/06f13844-c30e-467b-9b37-fecf33a7dcb1
+Ad Dictator explores what happens when an ad demands attention instead of hoping for it. Instead of a "Skip" button, the ad gives you a challenge, and it checks with your webcam or microphone that you actually did it. If you don't, the ad starts over.
 
-## How can I edit this code?
+## The demos
 
-There are several ways of editing your application.
+| Ad | Challenge | How it's checked |
+|---|---|---|
+| **McDonald's** | Smile at the camera for 3 seconds after the ad (15 s limit) | Facial expression recognition in the browser with face-api.js (tiny face detector + expression model) |
+| **Temu** | Say "Temu" during the ad to end it early; otherwise raise a hand above your head when it ends (30 s limit) | Live speech-to-text over a WebSocket to Deepgram, with tolerant matching for common mis-transcriptions ("tee moo", "timu", …); body pose with YOLOv8-pose |
+| **Fitness** | Raise a hand above your head | YOLOv8-pose keypoints: one arm with the elbow above the shoulder and the wrist above the elbow |
 
-**Use Lovable**
+Pass the challenge and you get a reward video. Fail or time out and the ad restarts. The landing page also sketches other uses: attention checks in online lessons, and comprehension questions before accepting terms and conditions.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/06f13844-c30e-467b-9b37-fecf33a7dcb1) and start prompting.
+## How it works
 
-Changes made via Lovable will be committed automatically to this repo.
+```mermaid
+flowchart LR
+    ui["React app<br/><sub>Vite · TypeScript · shadcn/ui</sub>"]
+    face["face-api.js<br/><sub>runs in the browser</sub>"]
+    dg(["Deepgram<br/><sub>live speech-to-text</sub>"])
+    bridge["Node bridge<br/><sub>Express + socket.io :3000</sub>"]
+    pose["Flask API :5110<br/><sub>YOLOv8n-pose (Ultralytics)</sub>"]
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+    ui -- "webcam frames" --> face
+    ui -- "mic audio (WebSocket)" --> dg
+    ui -- "webcam frames (socket.io)" --> bridge
+    bridge -- "HTTP /detect" --> pose
 ```
 
-**Edit a file directly in GitHub**
+- **Frontend:** React 18, TypeScript, Vite, Tailwind and shadcn/ui. The landing page was scaffolded with [Lovable](https://lovable.dev), and the detection features were written by hand on top.
+- **Smile detection** runs entirely in the browser. The face-api.js model weights are served from `public/models/`.
+- **Voice detection** streams microphone audio to Deepgram's real-time API and matches each transcript against the target phrase.
+- **Pose detection** sends webcam frames through a small socket.io bridge to a Flask service. The service runs YOLOv8n-pose and checks the shoulder, elbow and wrist keypoints.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Run it locally
 
-**Use GitHub Codespaces**
+```bash
+npm install
+cp .env.example .env.local          # add your Deepgram API key
+npm run dev                         # http://localhost:8080
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Pose detection needs two extra processes:
 
-## What technologies are used for this project?
+```bash
+# 1. YOLO pose service (port 5110)
+cd motionDetection
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+python pose_api.py
 
-This project is built with:
+# 2. socket.io bridge (port 3000), from the repo root
+npm run pose-server
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Repository
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/06f13844-c30e-467b-9b37-fecf33a7dcb1) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+| Path | Contents |
+|---|---|
+| `src/components/DemoSection.tsx` | The ad player and the state machine for each challenge |
+| `src/components/FacialRecognitionDemo.tsx` | Smile detection |
+| `src/lib/voiceDetection.ts`, `src/components/VoiceDetectionDemo.tsx` | Deepgram streaming and phrase matching |
+| `src/components/PoseDetectionDemo.tsx`, `pose-detection-server.cjs` | Pose detection client and bridge |
+| `motionDetection/` | Flask + YOLOv8-pose service |
+| `voiceDetection/` | Stand-alone Node prototype of the voice detector |

@@ -228,14 +228,11 @@ function detectMultiplePhrases(transcript, targetPhrases = ["temu"]) {
 }
 
 const live = async () => {
-  // The API key you created in step 1
-  const deepgramApiKey = "012ac08d5a581714b343fd2011014da0eb66933e";
+  const deepgramApiKey = process.env.DEEPGRAM_API_KEY;
 
-  // Check if API key is still the placeholder
-  if (deepgramApiKey === "APIKEY") {
-    console.error("❌ Error: Please replace 'APIKEY' with your actual Deepgram API key");
+  if (!deepgramApiKey) {
+    console.error("❌ Error: set the DEEPGRAM_API_KEY environment variable");
     console.log("💡 Get your API key from: https://console.deepgram.com/");
-    console.log("💡 Then replace 'APIKEY' on line 232 with your actual key");
     process.exit(1);
   }
 

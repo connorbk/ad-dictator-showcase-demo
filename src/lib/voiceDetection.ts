@@ -111,8 +111,11 @@ export class VoiceDetector {
 
   async initialize(): Promise<boolean> {
     try {
-      // Hardcoded Deepgram API key
-      const apiKey = "012ac08d5a581714b343fd2011014da0eb66933e";
+      // Deepgram key comes from .env.local (VITE_DEEPGRAM_API_KEY)
+      const apiKey = import.meta.env.VITE_DEEPGRAM_API_KEY;
+      if (!apiKey) {
+        throw new Error('Missing VITE_DEEPGRAM_API_KEY. Add it to .env.local');
+      }
 
       this.updateStatus('Initializing voice detection...');
 
